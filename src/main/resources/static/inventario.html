@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar Almacén - Promart</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome para íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --promart-red: #E31837;
+            --promart-blue: #00529F;
+            --promart-light: #f8f9fa;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+        
+        .card-header {
+            background-color: var(--promart-red);
+            color: white;
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 1.2rem;
+        }
+        
+        .section-title {
+            color: var(--promart-blue);
+            font-weight: 600;
+            margin: 1.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .btn-primary {
+            background-color: var(--promart-red);
+            border-color: var(--promart-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #c4142f;
+            border-color: #c4142f;
+        }
+        
+        .btn-outline-secondary {
+            color: var(--promart-blue);
+            border-color: var(--promart-blue);
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: var(--promart-blue);
+            color: white;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--promart-blue);
+            box-shadow: 0 0 0 0.25rem rgba(0, 82, 159, 0.25);
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 2rem;
+            margin: 1rem 0;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h4 class="mb-0">📦 Consultar Almacén</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="inventarioForm">
+                            <!-- Sección de Datos del Solicitante -->
+                            <h5 class="section-title">🧑‍💼 Datos del solicitante</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="nombre" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="nombre" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="codigo" class="form-label">Código</label>
+                                    <input type="text" class="form-control" id="codigo" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="sede" class="form-label">Sede origen</label>
+                                    <select class="form-select" id="sede" required>
+                                        <option value="" selected disabled>Seleccione una sede</option>
+                                        <option value="lima_centro">Lima Centro</option>
+                                        <option value="lima_norte">Lima Norte</option>
+                                        <option value="lima_sur">Lima Sur</option>
+                                        <option value="provincias">Provincias</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="fecha" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="fecha" required>
+                                </div>
+                            </div>
+
+                            <!-- Sección de Datos del Producto -->
+                            <h5 class="section-title mt-4">🧰 Datos del producto</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="codigoProducto" class="form-label">Código</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="codigoProducto" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="buscarProducto">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="nombreProducto" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="nombreProducto" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="categoria" class="form-label">Categoría</label>
+                                    <select class="form-select" id="categoria" required>
+                                        <option value="" selected disabled>Seleccione una categoría</option>
+                                        <option value="construccion">Construcción</option>
+                                        <option value="electricidad">Electricidad</option>
+                                        <option value="pinturas">Pinturas</option>
+                                        <option value="herramientas">Herramientas</option>
+                                        <option value="muebles">Muebles</option>
+                                        <option value="decoracion">Decoración</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cantidad" class="form-label">Cantidad solicitada</label>
+                                    <input type="number" class="form-control" id="cantidad" min="1" value="1" required>
+                                </div>
+                            </div>
+
+                            <!-- Motivo o comentario -->
+                            <h5 class="section-title mt-4">💬 Motivo o comentario</h5>
+                            <div class="mb-4">
+                                <textarea class="form-control" id="comentario" rows="3" placeholder="Ingrese el motivo de la solicitud o algún comentario adicional"></textarea>
+                            </div>
+
+                            <!-- Destino de consulta -->
+                            <h5 class="section-title">🏬 Destino de consulta (almacén al que consultas)</h5>
+                            <div class="mb-4">
+                                <select class="form-select" id="almacenDestino" required>
+                                    <option value="" selected disabled>Seleccione un almacén</option>
+                                    <option value="almacen_principal">Almacén Principal - Lima Centro</option>
+                                    <option value="almacen_norte">Almacén Lima Norte</option>
+                                    <option value="almacen_sur">Almacén Lima Sur</option>
+                                    <option value="almacen_provincias">Almacén Provincias</option>
+                                </select>
+                            </div>
+
+                            <!-- Tipo de acción -->
+                            <h5 class="section-title">📬 Tipo de acción:</h5>
+                            <div class="mb-4 radio-group">
+                                <div class="form-check radio-option">
+                                    <input class="form-check-input" type="radio" name="tipoAccion" id="soloConsultar" value="consulta" checked>
+                                    <label class="form-check-label" for="soloConsultar">
+                                        Solo consultar stock
+                                    </label>
+                                </div>
+                                <div class="form-check radio-option">
+                                    <input class="form-check-input" type="radio" name="tipoAccion" id="solicitarTransferencia" value="transferencia">
+                                    <label class="form-check-label" for="solicitarTransferencia">
+                                        Solicitar transferencia
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Botones -->
+                            <div class="d-flex justify-content-between mt-5">
+                                <button type="button" class="btn btn-outline-secondary px-4" id="btnCancelar">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fas fa-paper-plane me-2"></i>Enviar solicitud
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS y dependencias -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 para mensajes bonitos -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Script personalizado -->
+    <script>
+        // Función para descargar archivo (se mantiene por si se necesita en el futuro)
+        function downloadFile(content, filename, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Configuración inicial cuando el DOM está listo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Establecer la fecha actual por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha').value = today;
+            
+            // Buscar producto (simulación)
+            document.getElementById('buscarProducto').addEventListener('click', function() {
+                // Simulación de búsqueda de producto
+                const codigo = document.getElementById('codigoProducto').value;
+                if (codigo) {
+                    // Aquí iría la lógica para buscar el producto en una base de datos
+                    // Por ahora, simulamos una respuesta
+                    const productos = {
+                        'P001': 'Martillo de Acero 16oz',
+                        'P002': 'Destornillador Plano 6"',
+                        'P003': 'Pintura Blanca 1L',
+                        'P004': 'Cemento Sol 42.5kg'
+                    };
+                    
+                    if (productos[codigo]) {
+                        document.getElementById('nombreProducto').value = productos[codigo];
+                    } else {
+                        document.getElementById('nombreProducto').value = '';
+                        alert('Producto no encontrado');
+                    }
+                }
+            });
+            
+            // Configurar el botón de cancelar
+            document.getElementById('btnCancelar').addEventListener('click', function() {
+                if (confirm('¿Está seguro de cancelar la operación?')) {
+                    document.getElementById('inventarioForm').reset();
+                    document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+                }
+            });
+        });
+    </script>
+    
+    <!-- Incluir el archivo JavaScript personalizado -->
+    <script src="/js/inventario.js"></script>
+</body>
+</html>
