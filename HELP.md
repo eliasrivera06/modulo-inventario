@@ -1,7 +1,7 @@
 # Read Me First
 The following was discovered as part of building this project:
 
-* The original package name 'com.inventariopromart.modulo-inventariopromart' is invalid and this project uses 'com.inventariopromart.modulo_inventariopromart' instead.
+* The original package name 'com.inventario.modulo-inventario' is invalid and this project uses 'com.inventario.modulo_inventario' instead.
 
 # Getting Started
 
@@ -9,12 +9,12 @@ The following was discovered as part of building this project:
 For further reference, please consider the following sections:
 
 * [Official Apache Maven documentation](https://maven.apache.org/guides/index.html)
-* [Spring Boot Maven Plugin Reference Guide](https://docs.spring.io/spring-boot/3.4.11/maven-plugin)
-* [Create an OCI image](https://docs.spring.io/spring-boot/3.4.11/maven-plugin/build-image.html)
-* [Spring Web](https://docs.spring.io/spring-boot/3.4.11/reference/web/servlet.html)
-* [Spring Security](https://docs.spring.io/spring-boot/3.4.11/reference/web/spring-security.html)
-* [Spring Data JPA](https://docs.spring.io/spring-boot/3.4.11/reference/data/sql.html#data.sql.jpa-and-spring-data)
-* [Validation](https://docs.spring.io/spring-boot/3.4.11/reference/io/validation.html)
+* [Spring Boot Maven Plugin Reference Guide](https://docs.spring.io/spring-boot/3.4.12/maven-plugin)
+* [Create an OCI image](https://docs.spring.io/spring-boot/3.4.12/maven-plugin/build-image.html)
+* [Spring Web](https://docs.spring.io/spring-boot/3.4.12/reference/web/servlet.html)
+* [Spring Security](https://docs.spring.io/spring-boot/3.4.12/reference/web/spring-security.html)
+* [Spring Data JPA](https://docs.spring.io/spring-boot/3.4.12/reference/data/sql.html#data.sql.jpa-and-spring-data)
+* [Validation](https://docs.spring.io/spring-boot/3.4.12/reference/io/validation.html)
 
 ### Guides
 The following guides illustrate how to use some features concretely:

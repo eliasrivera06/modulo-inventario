@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario - Sistema</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="#" class="navbar-brand">📦 Sistema de Inventario</a>
+        <div class="navbar-user">
+            <span th:text="${#authentication.name}">Usuario</span>
+            <span class="badge badge-admin"
+                th:if="${#authorization.expression('hasRole(''ADMIN'')')}">ADMINISTRADOR</span>
+            <span class="badge badge-emp" th:if="${#authorization.expression('hasRole(''EMPLEADO'')')}">EMPLEADO</span>
+            <form th:action="@{/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn-logout">Cerrar Sesión</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Filtros -->
+        <form th:action="@{/inventario}" method="get" class="filters-bar">
+            <div class="filter-item">
+                <label>Buscar</label>
+                <input type="text" name="keyword" class="form-control" placeholder="Nombre, Código..."
+                    th:value="${param.keyword}">
+            </div>
+            <div class="filter-item">
+                <label>Sede</label>
+                <input type="text" name="sede" class="form-control" placeholder="Sede" th:value="${param.sede}">
+            </div>
+            <div class="filter-item">
+                <label>Categoría</label>
+                <input type="text" name="categoria" class="form-control" placeholder="Categoría"
+                    th:value="${param.categoria}">
+            </div>
+            <div class="filter-item">
+                <label>Marca</label>
+                <input type="text" name="marca" class="form-control" placeholder="Marca" th:value="${param.marca}">
+            </div>
+            <div class="filter-item" style="flex: 0;">
+                <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">Filtrar</button>
+            </div>
+        </form>
+
+        <!-- Acciones -->
+        <div class="actions-bar">
+            <a th:href="@{/inventario}" class="btn-secondary">🔄 Actualizar Tabla</a>
+
+            <div class="d-flex gap-2">
+                <button sec:authorize="hasRole('ADMIN')" onclick="openModal('modalAgregarProducto')"
+                    class="btn-primary">➕
+                    Agregar Producto</button>
+                <button onclick="openModal('modalSolicitud')" class="btn-action" style="background-color: #0056b3;">📋
+                    Consulta Almacén</button>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mini Imagen</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Sede</th>
+                        <th>Categoría</th>
+                        <th>Marca</th>
+                        <th>Descripción</th>
+                        <th>Stock</th>
+                        <th>Precio</th>
+                        <th sec:authorize="hasRole('ADMIN')">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="p : ${productos}">
+                        <td><img th:src="${p.imagenUrl != null && !p.imagenUrl.isEmpty() ? p.imagenUrl : 'https://via.placeholder.com/50'}"
+                                class="product-img" alt="img"></td>
+                        <td th:text="${p.codigo}">COD001</td>
+                        <td th:text="${p.nombre}">Producto</td>
+                        <td th:text="${p.sede}">Sede</td>
+                        <td th:text="${p.categoria}">Cat</td>
+                        <td th:text="${p.marca}">Marca</td>
+                        <td th:text="${p.descripcion}">Desc</td>
+                        <td th:text="${p.stock}">0</td>
+                        <td th:text="${'S/ ' + p.precio}">0.00</td>
+                        <td sec:authorize="hasRole('ADMIN')">
+                            <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;"
+                                th:onclick="editarProducto([[${p.id}]], [[${p.codigo}]], [[${p.nombre}]], [[${p.sede}]], [[${p.categoria}]], [[${p.marca}]], [[${p.descripcion}]], [[${p.stock}]], [[${p.precio}]], [[${p.imagenUrl}]])">
+                                ✏️
+                            </button>
+                            <a th:href="@{/inventario/eliminar/{id}(id=${p.id})}" class="btn-logout"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background-color: var(--danger);"
+                                onclick="return confirm('¿Seguro de eliminar este producto?')">🗑️</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(productos)}">
+                        <td colspan="10" class="text-center">No se encontraron productos.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Producto (NUEVO) -->
+    <div id="modalAgregarProducto" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('modalAgregarProducto')">&times;</span>
+            <div class="modal-header">
+                <h3>Agregar Producto</h3>
+            </div>
+            <form th:action="@{/inventario/agregar}" method="post" enctype="multipart/form-data">
+
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Código</label>
+                        <input type="text" name="codigo" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Nombre</label>
+                        <input type="text" name="nombre" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Sede</label>
+                        <input type="text" name="sede" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Categoría</label>
+                        <input type="text" name="categoria" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Marca</label>
+                        <input type="text" name="marca" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Precio</label>
+                        <input type="number" step="0.01" name="precio" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Stock</label>
+                        <input type="number" name="stock" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Imagen (Archivo)</label>
+                        <input type="file" name="imagen" class="form-control" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea name="descripcion" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary"
+                        onclick="closeModal('modalAgregarProducto')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Producto (EXISTENTE) -->
+    <div id="modalEditarProducto" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('modalEditarProducto')">&times;</span>
+            <div class="modal-header">
+                <h3>Editar Producto</h3>
+            </div>
+            <form th:action="@{/inventario/editar}" method="post" id="formEditarProducto">
+                <input type="hidden" id="editId" name="id">
+
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Código</label>
+                        <input type="text" id="editCodigo" name="codigo" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Nombre</label>
+                        <input type="text" id="editNombre" name="nombre" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Sede</label>
+                        <input type="text" id="editSede" name="sede" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Categoría</label>
+                        <input type="text" id="editCategoria" name="categoria" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Marca</label>
+                        <input type="text" id="editMarca" name="marca" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Precio</label>
+                        <input type="number" step="0.01" id="editPrecio" name="precio" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Stock</label>
+                        <input type="number" id="editStock" name="stock" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>URL Imagen</label>
+                        <input type="text" id="editImagen" name="imagenUrl" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="editDesc" name="descripcion" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary"
+                        onclick="closeModal('modalEditarProducto')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Consulta Almacén -->
+    <div id="modalSolicitud" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('modalSolicitud')">&times;</span>
+            <div class="modal-header">
+                <h3>Consulta de Almacén</h3>
+            </div>
+            <form th:action="@{/inventario/solicitar}" method="post" target="_blank"
+                onsubmit="setTimeout(() => closeModal('modalSolicitud'), 1000)">
+
+                <h4>🧑‍💼 Datos del Solicitante</h4>
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Nombre</label>
+                        <input type="text" name="nombreSolicitante" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Código</label>
+                        <input type="text" name="codigoSolicitante" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Sede Origen</label>
+                    <input type="text" name="sedeOrigen" class="form-control" required>
+                </div>
+
+                <h4>🧰 Datos del Producto</h4>
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Código</label>
+                        <input type="text" name="codigoProducto" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Nombre</label>
+                        <input type="text" name="nombreProducto" class="form-control" required>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>Categoría</label>
+                        <input type="text" name="categoriaProducto" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Cantidad</label>
+                        <input type="number" name="cantidadSolicitada" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>💬 Motivo / Comentario</label>
+                    <textarea name="motivo" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>🏬 Destino de consulta</label>
+                    <select name="destino" class="form-control">
+                        <option value="Almacen Chimbote">Almacén Chimbote</option>
+                        <option value="Sede Norte">Sede Norte</option>
+                        <option value="Sede Sur">Sede Sur</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>📬 Tipo de Acción</label>
+                    <div>
+                        <label><input type="radio" name="tipoAccion" value="CONSULTA" checked> Solo
+                            consultar
+                            stock</label>
+                        <label style="margin-left: 1rem;"><input type="radio" name="tipoAccion" value="TRANSFERENCIA">
+                            Solicitar transferencia</label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modalSolicitud')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Enviar Solicitud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).style.display = "block";
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = "none";
+        }
+
+        function editarProducto(id, codigo, nombre, sede, categoria, marca, desc, stock, precio, img) {
+            openModal('modalEditarProducto');
+
+            document.getElementById('editId').value = id;
+            document.getElementById('editCodigo').value = codigo;
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editSede').value = sede;
+            document.getElementById('editCategoria').value = categoria;
+            document.getElementById('editMarca').value = marca;
+            document.getElementById('editDesc').value = desc;
+            document.getElementById('editStock').value = stock;
+            document.getElementById('editPrecio').value = precio;
+            document.getElementById('editImagen').value = img;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = "none";
+            }
+        }
+    </script>
+
+
+</body>
+
+</html>
