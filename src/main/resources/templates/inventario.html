@@ -5,6 +5,18 @@
     <meta charset="UTF-8">
     <title>Inventario - Sistema</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        /* Estilos para el botón de foco */
+        .btn-foco-on {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .btn-foco-off {
+            background-color: #6c757d;
+            color: #fff;
+        }
+    </style>
 </head>
 
 <body>
@@ -93,6 +105,13 @@
                         <td th:text="${p.stock}">0</td>
                         <td th:text="${'S/ ' + p.precio}">0.00</td>
                         <td sec:authorize="hasRole('ADMIN')">
+                            <!-- Botón Foco: Amarillo = Disponible, Gris = No Disponible -->
+                            <a th:href="@{/inventario/estado/{id}(id=${p.id})}"
+                                th:class="${p.estado == 1 ? 'btn-foco-on' : 'btn-foco-off'}"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none; border-radius: 4px; display: inline-block;"
+                                th:title="${p.estado == 1 ? 'Disponible - Click para desactivar' : 'No Disponible - Click para activar'}">
+                                💡
+                            </a>
                             <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;"
                                 th:onclick="editarProducto([[${p.id}]], [[${p.codigo}]], [[${p.nombre}]], [[${p.sede}]], [[${p.categoria}]], [[${p.marca}]], [[${p.descripcion}]], [[${p.stock}]], [[${p.precio}]], [[${p.imagenUrl}]])">
                                 ✏️
@@ -158,8 +177,9 @@
                         <input type="number" name="stock" class="form-control" required>
                     </div>
                     <div class="form-group" style="flex:1">
-                        <label>Imagen (Archivo)</label>
-                        <input type="file" name="imagen" class="form-control" accept="image/*">
+                        <label>Imagen (JPG, PNG, WEBP, etc.) (200 KB)</label>
+                        <input type="file" id="imagenInput" name="imagen" class="form-control" accept="image/*"
+                            onchange="validarImagen(this)">
                     </div>
                 </div>
 
@@ -354,6 +374,17 @@
         window.onclick = function (event) {
             if (event.target.className === 'modal') {
                 event.target.style.display = "none";
+            }
+        }
+
+        function validarImagen(input) {
+            const archivo = input.files[0];
+            if (archivo) {
+                const maxSize = 200 * 1024; // 200 KB
+                if (archivo.size > maxSize) {
+                    alert('El archivo pesa más de 200 KB. Por favor, sube una imagen más ligera.');
+                    input.value = ""; // Limpiar el input
+                }
             }
         }
     </script>

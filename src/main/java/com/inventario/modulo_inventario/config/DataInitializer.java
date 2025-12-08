@@ -42,8 +42,9 @@ public class DataInitializer {
             List<Producto> productos = Arrays.asList(
                     crearProducto("P001", "Taladro Percutor", "/img/taladropercutor.webp", "Sede Chimbote",
                             "Herramientas", "Bosch", "Taladro de alta potencia", 50, new BigDecimal("250.00")),
-                    crearProducto("P002", "Juego de Destornilladores", "/img/juegodedestornilladores.png", "Sede Norte",
-                            "Herramientas", "Stanley", "Set de 12 piezas", 100, new BigDecimal("45.90")),
+                    crearProducto("P002", "Juego de Destornilladores", "/img/juegodedestornilladores.webp",
+                            "Sede Norte",
+                            "Herramientas", "Stanley", "Set de 10 piezas", 100, new BigDecimal("45.90")),
                     crearProducto("P003", "Pintura Latex Blanca", "/img/pinturalatexblanca.webp", "Sede Sur",
                             "Pinturas", "CPP", "Balde de 4 litros", 30, new BigDecimal("60.00")));
 
@@ -70,6 +71,7 @@ public class DataInitializer {
         p.setDescripcion(descripcion);
         p.setStock(stock);
         p.setPrecio(precio);
+        p.setEstado(1); // Disponible por defecto
         return p;
     }
 }

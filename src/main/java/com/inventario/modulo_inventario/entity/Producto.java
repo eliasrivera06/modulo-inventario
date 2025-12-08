@@ -44,4 +44,8 @@ public class Producto {
     @NotNull
     @PositiveOrZero
     private BigDecimal precio;
+
+    // Estado del producto: 1 = Disponible, 0 = No Disponible
+    @Column(nullable = false)
+    private Integer estado = 1;
 }

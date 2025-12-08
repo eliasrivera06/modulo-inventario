@@ -25,6 +25,11 @@ public class ProductoService {
         return productoRepository.search(keyword, sede, categoria, marca);
     }
 
+    // Búsqueda solo de productos disponibles (para empleados)
+    public List<Producto> buscarDisponibles(String keyword, String sede, String categoria, String marca) {
+        return productoRepository.searchDisponibles(keyword, sede, categoria, marca);
+    }
+
     @Transactional
     public Producto guardar(Producto producto) {
         return productoRepository.save(producto);
@@ -37,5 +42,14 @@ public class ProductoService {
     @Transactional
     public void eliminar(Long id) {
         productoRepository.deleteById(id);
+    }
+
+    // Cambiar estado del producto (disponible/no disponible)
+    @Transactional
+    public void cambiarEstado(Long id) {
+        productoRepository.findById(id).ifPresent(producto -> {
+            producto.setEstado(producto.getEstado() == 1 ? 0 : 1);
+            productoRepository.save(producto);
+        });
     }
 }

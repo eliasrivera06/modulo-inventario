@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
 @RequestMapping("/inventario")
@@ -35,7 +37,21 @@ public class InventarioController {
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String marca,
             Model model) {
-        List<Producto> productos = productoService.buscar(keyword, sede, categoria, marca);
+
+        // Verificar si el usuario es ADMIN o EMPLEADO
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean esAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        List<Producto> productos;
+        if (esAdmin) {
+            // Admin ve todos los productos
+            productos = productoService.buscar(keyword, sede, categoria, marca);
+        } else {
+            // Empleado solo ve productos disponibles
+            productos = productoService.buscarDisponibles(keyword, sede, categoria, marca);
+        }
+
         model.addAttribute("productos", productos);
         model.addAttribute("producto", new Producto()); // Para el modal de agregar/editar
         model.addAttribute("solicitud", new Solicitud()); // Para el modal de solicitud
@@ -73,6 +89,14 @@ public class InventarioController {
     @GetMapping("/eliminar/{id}")
     public String eliminarProducto(@PathVariable Long id) {
         productoService.eliminar(id);
+        return "redirect:/inventario";
+    }
+
+    // Cambiar estado del producto (solo ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/estado/{id}")
+    public String cambiarEstadoProducto(@PathVariable Long id) {
+        productoService.cambiarEstado(id);
         return "redirect:/inventario";
     }
 
