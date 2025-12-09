@@ -64,7 +64,11 @@
 
         <!-- Acciones -->
         <div class="actions-bar">
-            <a th:href="@{/inventario}" class="btn-secondary">🔄 Actualizar Tabla</a>
+            <div class="d-flex gap-2">
+                <a th:href="@{/inventario}" class="btn-secondary">🔄 Actualizar Tabla</a>
+                <button sec:authorize="hasRole('ADMIN')" onclick="abrirPapelera()" class="btn-secondary"
+                    style="background-color: #6c757d;">🗑️ Papelera</button>
+            </div>
 
             <div class="d-flex gap-2">
                 <button sec:authorize="hasRole('ADMIN')" onclick="openModal('modalAgregarProducto')"
@@ -118,7 +122,7 @@
                             </button>
                             <a th:href="@{/inventario/eliminar/{id}(id=${p.id})}" class="btn-logout"
                                 style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background-color: var(--danger);"
-                                onclick="return confirm('¿Seguro de eliminar este producto?')">🗑️</a>
+                                onclick="return confirm('¿Seguro de eliminar este producto? Se moverá a la papelera.')">🗑️</a>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(productos)}">
@@ -126,6 +130,45 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Botón Valorización de Stock (debajo de la tabla, a la derecha) -->
+        <div class="actions-bar" style="justify-content: flex-end; margin-top: 1rem;" sec:authorize="hasRole('ADMIN')">
+            <button onclick="openModal('modalValorizacion')" class="btn-action" style="background-color: #28a745;">
+                📊 Valorización de Stock
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Valorización de Stock -->
+    <div id="modalValorizacion" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeModal('modalValorizacion')">&times;</span>
+            <div class="modal-header">
+                <h3>📊 Valorización de Stock</h3>
+            </div>
+            <form id="formValorizacion" onsubmit="descargarValorizacion(event)">
+                <div class="form-group">
+                    <label>Tipo de Filtro</label>
+                    <select id="filtroTipo" class="form-control" onchange="toggleFiltroValor()">
+                        <option value="TODO">Todo el inventario</option>
+                        <option value="CATEGORIA">Por Categoría(s)</option>
+                        <option value="SEDE">Por Sede(s)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="grupoFiltroValor" style="display: none;">
+                    <label id="labelFiltroValor">Valor del Filtro</label>
+                    <input type="text" id="filtroValor" class="form-control" placeholder="Ingrese el valor...">
+                    <small id="helpFiltroValor" style="color: #666;"></small>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary"
+                        onclick="closeModal('modalValorizacion')">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="background-color: #28a745;">📄 Generar PDF</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -346,6 +389,26 @@
         </div>
     </div>
 
+    <!-- Modal Papelera de Productos -->
+    <div id="modalPapelera" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="closeModal('modalPapelera')">&times;</span>
+            <div class="modal-header">
+                <h3>🗑️ Papelera de Productos</h3>
+            </div>
+            <div id="papeleraContenido" style="max-height: 400px; overflow-y: auto;">
+                <p class="text-center">Cargando...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('modalPapelera')">Cerrar</button>
+                <a th:href="@{/inventario/papelera/vaciar}" class="btn-logout"
+                    style="background-color: var(--danger); text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px;"
+                    onclick="return confirm('¿Seguro de vaciar TODA la papelera? Esta acción no se puede deshacer.')">🗑️
+                    Vaciar Papelera</a>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openModal(id) {
             document.getElementById(id).style.display = "block";
@@ -386,6 +449,89 @@
                     input.value = ""; // Limpiar el input
                 }
             }
+        }
+
+        // ========== FUNCIONES DE PAPELERA ==========
+        function abrirPapelera() {
+            openModal('modalPapelera');
+            cargarPapelera();
+        }
+
+        function cargarPapelera() {
+            fetch('/inventario/papelera')
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    if (data.length === 0) {
+                        html = '<p class="text-center" style="padding: 2rem; color: #666;">📭 La papelera está vacía.</p>';
+                    } else {
+                        html = '<table style="width: 100%;">';
+                        html += '<thead><tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Fecha Eliminación</th><th>Acciones</th></tr></thead>';
+                        html += '<tbody>';
+                        data.forEach(item => {
+                            const fecha = new Date(item.fechaEliminacion).toLocaleString('es-PE');
+                            html += `<tr>
+                                <td>${item.codigo}</td>
+                                <td>${item.nombre}</td>
+                                <td>${item.categoria}</td>
+                                <td>${fecha}</td>
+                                <td>
+                                    <a href="/inventario/papelera/restaurar/${item.id}" class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none; border-radius: 4px;">♻️ Restaurar</a>
+                                    <a href="/inventario/papelera/eliminar/${item.id}" class="btn-logout" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background-color: var(--danger); text-decoration: none; border-radius: 4px;" onclick="return confirm('¿Eliminar permanentemente? No se puede deshacer.')">❌ Eliminar</a>
+                                </td>
+                            </tr>`;
+                        });
+                        html += '</tbody></table>';
+                    }
+                    document.getElementById('papeleraContenido').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('papeleraContenido').innerHTML = '<p class="text-center" style="color: red;">Error al cargar la papelera.</p>';
+                });
+        }
+
+        // ========== FUNCIONES DE VALORIZACIÓN ==========
+        function toggleFiltroValor() {
+            const tipo = document.getElementById('filtroTipo').value;
+            const grupo = document.getElementById('grupoFiltroValor');
+            const label = document.getElementById('labelFiltroValor');
+            const input = document.getElementById('filtroValor');
+            const help = document.getElementById('helpFiltroValor');
+
+            if (tipo === 'TODO') {
+                grupo.style.display = 'none';
+                input.value = '';
+            } else if (tipo === 'CATEGORIA') {
+                grupo.style.display = 'block';
+                label.textContent = 'Categoría(s)';
+                input.placeholder = 'Ej: Electrónica, Hardware';
+                help.textContent = 'Separe múltiples categorías con coma (,)';
+            } else if (tipo === 'SEDE') {
+                grupo.style.display = 'block';
+                label.textContent = 'Sede(s)';
+                input.placeholder = 'Ej: Chimbote, Lima';
+                help.textContent = 'Separe múltiples sedes con coma (,)';
+            }
+        }
+
+        function descargarValorizacion(event) {
+            event.preventDefault();
+
+            const filtroTipo = document.getElementById('filtroTipo').value;
+            const filtroValor = document.getElementById('filtroValor').value;
+
+            // Construir URL con parámetros
+            let url = '/inventario/valorizacion/pdf?filtroTipo=' + encodeURIComponent(filtroTipo);
+            if (filtroValor) {
+                url += '&filtroValor=' + encodeURIComponent(filtroValor);
+            }
+
+            // Descargar PDF
+            window.location.href = url;
+
+            // Cerrar modal después de un momento
+            setTimeout(() => closeModal('modalValorizacion'), 500);
         }
     </script>
 

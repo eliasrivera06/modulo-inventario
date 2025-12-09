@@ -25,10 +25,13 @@ public class InventarioController {
 
     private final ProductoService productoService;
     private final SolicitudService solicitudService;
+    private final com.inventario.modulo_inventario.service.ValorizacionService valorizacionService;
 
-    public InventarioController(ProductoService productoService, SolicitudService solicitudService) {
+    public InventarioController(ProductoService productoService, SolicitudService solicitudService,
+            com.inventario.modulo_inventario.service.ValorizacionService valorizacionService) {
         this.productoService = productoService;
         this.solicitudService = solicitudService;
+        this.valorizacionService = valorizacionService;
     }
 
     @GetMapping
@@ -115,5 +118,62 @@ public class InventarioController {
                 .headers(headers)
                 .contentType(MediaType.TEXT_PLAIN)
                 .body(new InputStreamResource(bis));
+    }
+
+    // ========== ENDPOINTS DE PAPELERA ==========
+
+    // Obtener productos en papelera (para AJAX)
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/papelera")
+    @ResponseBody
+    public List<com.inventario.modulo_inventario.entity.PapeleraProducto> listarPapelera() {
+        return productoService.listarPapelera();
+    }
+
+    // Restaurar producto desde papelera
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/papelera/restaurar/{id}")
+    public String restaurarProducto(@PathVariable Long id) {
+        productoService.restaurarDesdePapelera(id);
+        return "redirect:/inventario";
+    }
+
+    // Eliminar permanentemente de papelera
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/papelera/eliminar/{id}")
+    public String eliminarPermanentemente(@PathVariable Long id) {
+        productoService.eliminarPermanentemente(id);
+        return "redirect:/inventario";
+    }
+
+    // Vaciar papelera completa
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/papelera/vaciar")
+    public String vaciarPapelera() {
+        productoService.vaciarPapelera();
+        return "redirect:/inventario";
+    }
+
+    // ========== ENDPOINT DE VALORIZACIÓN ==========
+
+    // Generar PDF de valorización de stock
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/valorizacion/pdf")
+    public ResponseEntity<byte[]> generarValorizacionPdf(
+            @RequestParam(required = false, defaultValue = "TODO") String filtroTipo,
+            @RequestParam(required = false, defaultValue = "") String filtroValor) {
+
+        byte[] pdfBytes = valorizacionService.generarPdfValorizacion(filtroTipo, filtroValor);
+
+        String fileName = "valorizacion_stock_" + java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".pdf";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=" + fileName);
+        headers.add("Content-Type", "application/pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
     }
 }
