@@ -30,4 +30,8 @@ public class Solicitud {
     private String motivo;
     private String destino;
     private String tipoAccion; // "CONSULTA", "TRANSFERENCIA"
+
+    // Estado de la solicitud: "Enviado", "Recibido", "Realizado"
+    @Column(nullable = false)
+    private String estado = "Enviado";
 }

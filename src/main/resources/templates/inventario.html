@@ -16,6 +16,31 @@
             background-color: #6c757d;
             color: #fff;
         }
+
+        /* Estilos de estado */
+        .estado-enviado {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .estado-recibido {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .estado-realizado {
+            background-color: #cce5ff;
+            color: #004085;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 
@@ -76,6 +101,8 @@
                     Agregar Producto</button>
                 <button onclick="openModal('modalSolicitud')" class="btn-action" style="background-color: #0056b3;">📋
                     Consulta Almacén</button>
+                <button onclick="abrirVerConsultas()" class="btn-action" style="background-color: #17a2b8;">👁️
+                    Ver Consultas</button>
             </div>
         </div>
 
@@ -321,11 +348,11 @@
                 <h4>🧑‍💼 Datos del Solicitante</h4>
                 <div class="d-flex gap-2">
                     <div class="form-group" style="flex:1">
-                        <label>Nombre</label>
+                        <label>Nombre Solicitante</label>
                         <input type="text" name="nombreSolicitante" class="form-control" required>
                     </div>
                     <div class="form-group" style="flex:1">
-                        <label>Código</label>
+                        <label>Código Encargado</label>
                         <input type="text" name="codigoSolicitante" class="form-control" required>
                     </div>
                 </div>
@@ -370,14 +397,21 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>📬 Tipo de Acción</label>
-                    <div>
-                        <label><input type="radio" name="tipoAccion" value="CONSULTA" checked> Solo
-                            consultar
-                            stock</label>
-                        <label style="margin-left: 1rem;"><input type="radio" name="tipoAccion" value="TRANSFERENCIA">
-                            Solicitar transferencia</label>
+                <div class="d-flex gap-2">
+                    <div class="form-group" style="flex:1">
+                        <label>📬 Tipo de Acción</label>
+                        <div>
+                            <label><input type="radio" name="tipoAccion" value="CONSULTA" checked> Solo consultar
+                                stock</label>
+                            <label style="margin-left: 1rem;"><input type="radio" name="tipoAccion"
+                                    value="TRANSFERENCIA">
+                                Solicitar transferencia</label>
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>📊 Estado</label>
+                        <input type="text" name="estado" value="Enviado" class="form-control" readonly
+                            style="background-color: #fff3cd; color: #856404; font-weight: bold;">
                     </div>
                 </div>
 
@@ -386,6 +420,34 @@
                     <button type="submit" class="btn-primary">Enviar Solicitud</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Ver Consultas -->
+    <div id="modalVerConsultas" class="modal">
+        <div class="modal-content" style="max-width: 1100px;">
+            <span class="close" onclick="closeModal('modalVerConsultas')">&times;</span>
+            <div class="modal-header">
+                <h3>👁️ Ver Consultas de Almacén</h3>
+            </div>
+
+            <!-- Barra de búsqueda -->
+            <div class="d-flex gap-2" style="margin-bottom: 1rem;">
+                <input type="text" id="buscarConsulta" class="form-control"
+                    placeholder="Buscar por nombre del solicitante o código del encargado..." style="flex: 1;"
+                    onkeyup="buscarConsultas()">
+                <button class="btn-secondary" onclick="buscarConsultas()">🔍 Buscar</button>
+            </div>
+
+            <div id="consultasContenido" style="max-height: 400px; overflow-y: auto;">
+                <p class="text-center">Cargando...</p>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-primary" style="background-color: #28a745;" onclick="descargarConsultasPdf()">📄
+                    Descargar PDF General</button>
+                <button type="button" class="btn-secondary" onclick="closeModal('modalVerConsultas')">Cerrar</button>
+            </div>
         </div>
     </div>
 
@@ -532,6 +594,72 @@
 
             // Cerrar modal después de un momento
             setTimeout(() => closeModal('modalValorizacion'), 500);
+        }
+
+        // ========== FUNCIONES DE VER CONSULTAS ==========
+        function abrirVerConsultas() {
+            openModal('modalVerConsultas');
+            document.getElementById('buscarConsulta').value = '';
+            cargarConsultas('');
+        }
+
+        function buscarConsultas() {
+            const keyword = document.getElementById('buscarConsulta').value;
+            cargarConsultas(keyword);
+        }
+
+        function cargarConsultas(keyword) {
+            let url = '/inventario/consultas';
+            if (keyword) {
+                url += '?keyword=' + encodeURIComponent(keyword);
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    if (data.length === 0) {
+                        html = '<p class="text-center" style="padding: 2rem; color: #666;">📭 No se encontraron consultas.</p>';
+                    } else {
+                        html = '<table style="width: 100%; font-size: 0.85rem;">';
+                        html += '<thead><tr><th>Fecha</th><th>Solicitante</th><th>Cód. Encargado</th><th>Sede</th><th>Producto</th><th>Destino</th><th>Cant.</th><th>Tipo</th><th>Estado</th><th>PDF</th></tr></thead>';
+                        html += '<tbody>';
+                        data.forEach(item => {
+                            const fecha = item.fecha ? new Date(item.fecha).toLocaleString('es-PE') : '-';
+                            let estadoClass = 'estado-enviado';
+                            if (item.estado === 'Recibido') estadoClass = 'estado-recibido';
+                            if (item.estado === 'Realizado') estadoClass = 'estado-realizado';
+
+                            html += `<tr>
+                                <td>${fecha}</td>
+                                <td>${item.nombreSolicitante}</td>
+                                <td>${item.codigoSolicitante}</td>
+                                <td>${item.sedeOrigen}</td>
+                                <td>${item.nombreProducto}</td>
+                                <td>${item.destino}</td>
+                                <td style="text-align: center;">${item.cantidadSolicitada}</td>
+                                <td>${item.tipoAccion}</td>
+                                <td><span class="${estadoClass}">${item.estado}</span></td>
+                                <td><a href="/inventario/consultas/pdf/${item.id}" class="btn-primary" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; text-decoration: none; border-radius: 4px;">📄</a></td>
+                            </tr>`;
+                        });
+                        html += '</tbody></table>';
+                    }
+                    document.getElementById('consultasContenido').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('consultasContenido').innerHTML = '<p class="text-center" style="color: red;">Error al cargar las consultas.</p>';
+                });
+        }
+
+        function descargarConsultasPdf() {
+            const keyword = document.getElementById('buscarConsulta').value;
+            let url = '/inventario/consultas/pdf';
+            if (keyword) {
+                url += '?keyword=' + encodeURIComponent(keyword);
+            }
+            window.location.href = url;
         }
     </script>
 

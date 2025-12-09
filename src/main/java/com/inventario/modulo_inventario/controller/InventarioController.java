@@ -176,4 +176,61 @@ public class InventarioController {
                 .headers(headers)
                 .body(pdfBytes);
     }
+
+    // ========== ENDPOINTS DE CONSULTAS ==========
+
+    // Listar todas las consultas (para AJAX)
+    @GetMapping("/consultas")
+    @ResponseBody
+    public List<Solicitud> listarConsultas(@RequestParam(required = false) String keyword) {
+        if (keyword != null && !keyword.isBlank()) {
+            return solicitudService.buscar(keyword);
+        }
+        return solicitudService.listarTodas();
+    }
+
+    // Generar PDF de consultas
+    @GetMapping("/consultas/pdf")
+    public ResponseEntity<byte[]> generarConsultasPdf(@RequestParam(required = false) String keyword) {
+        List<Solicitud> solicitudes;
+        if (keyword != null && !keyword.isBlank()) {
+            solicitudes = solicitudService.buscar(keyword);
+        } else {
+            solicitudes = solicitudService.listarTodas();
+        }
+
+        byte[] pdfBytes = solicitudService.generarPdfConsultas(solicitudes);
+
+        String fileName = "consultas_almacen_" + java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".pdf";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=" + fileName);
+        headers.add("Content-Type", "application/pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    // Generar PDF de una consulta individual
+    @GetMapping("/consultas/pdf/{id}")
+    public ResponseEntity<byte[]> generarConsultaIndividualPdf(@PathVariable Long id) {
+        byte[] pdfBytes = solicitudService.generarPdfConsultaIndividual(id);
+
+        if (pdfBytes == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String fileName = "consulta_" + id + "_" + java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".pdf";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=" + fileName);
+        headers.add("Content-Type", "application/pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
 }
